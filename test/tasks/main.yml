@@ -1,0 +1,58 @@
+---
+# tasks file for hdfs_cluster
+          
+          - name: copying jdk file
+            copy:
+                    src: jdk-8u281-linux-x64.rpm
+                    dest: /root
+          - name: copying hadoop file
+            copy:
+                    src: hadoop-1.2.1-1.x86_64.rpm
+                    dest: /root
+          - name: installing jdk
+            command: "rpm -i /root/jdk-8u281-linux-x64.rpm  --force"
+
+          - name: installing hadoop
+            command: "rpm -i /root/hadoop-1.2.1-1.x86_64.rpm --force"
+          - name: creating a dir
+            file:
+                    path: "{{ dir }}"
+                    state: directory
+
+          - name: writing hdfs file
+            blockinfile:
+                    path: /etc/hadoop/hdfs-site.xml
+                    insertafter: <configuration>
+                    block: |
+                            <property>
+                            <name>dfs.{{ node }}.dir</name>
+                            <value>{{ dir }}</value>
+                            </property>
+          - name: for_Ip
+            shell: hostname
+            register: m_ip
+
+          - name: writing core file
+            blockinfile:
+                    path: /etc/hadoop/core-site.xml
+                    insertafter: <configuration>
+                    block: |
+                            <property>
+                            <name>fs.default.name</name>
+                            <value>hdfs://{{ m_ip['stdout'] }}:{{ port_m }}</value>
+                            </property>
+          - name: for formatting the name node
+            shell: "echo Y | hadoop namenode -format"
+          - name: for starting the services
+            command: "hadoop-daemon.sh start namenode"
+          - name: for enabling
+            blockinfile:
+                    path: /etc/rc.local
+                    block: hadoop-daemon.sh start namenode
+          - name: changing mode
+            command: "chmod +x /etc/rc.local"
+          - name: showing jps
+            shell: "jps"
+            register: jps
+          - debug:
+                  var: jps

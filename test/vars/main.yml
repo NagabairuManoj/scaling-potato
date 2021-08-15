@@ -1,0 +1,5 @@
+---
+# vars file for hdfs_cluster
+dir: /nn
+node: name
+port_m: 9001
